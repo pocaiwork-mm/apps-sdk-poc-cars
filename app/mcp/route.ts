@@ -101,16 +101,16 @@ const handler = createMcpHandler(async (server) => {
     }
   );
 
-  // Cars Recommendation Widget
+  // Cars Recommendation Widget (generic POC: MNOJ)
   const carsWidget: ContentWidget = {
-    id: "mahindra_cars_recommendation",
-    title: "Mahindra Cars",
+    id: "mnoj_cars_recommendation",
+    title: "MNOJ Cars",
     templateUri: "ui://widget/cars-template.html",
-    invoking: "Finding perfect Mahindra for you...",
+    invoking: "Finding the perfect MNOJ for you...",
     invoked: "Cars recommendations ready",
     html: carsHtml,
-    description: "Get personalized Mahindra car recommendations",
-    widgetDomain: "https://mahindra.com",
+    description: "Get personalized MNOJ car recommendations",
+    widgetDomain: "https://example.com",
   };
 
   server.registerResource(
@@ -146,7 +146,7 @@ const handler = createMcpHandler(async (server) => {
     {
       title: carsWidget.title,
       description:
-        "Get personalized Mahindra car recommendations based on budget, vehicle type, and preferences",
+        "Get personalized MNOJ car recommendations based on budget, vehicle type, and preferences",
       inputSchema: {
         budget: z
           .string()
@@ -157,7 +157,7 @@ const handler = createMcpHandler(async (server) => {
         preferredBrand: z
           .string()
           .optional()
-          .describe("Preferred Mahindra brand (e.g., XUV, Scorpio, Bolero)"),
+          .describe("Preferred MNOJ brand (e.g., XUV, Scorpio, Bolero)"),
       },
       _meta: widgetMeta(carsWidget),
     },
@@ -175,7 +175,7 @@ const handler = createMcpHandler(async (server) => {
         content: [
           {
             type: "text",
-            text: `Found ${recommendations.length} Mahindra cars matching your criteria (Budget: ${budget}, Type: ${vehicleType}${preferredBrand ? `, Brand: ${preferredBrand}` : ""})`,
+            text: `Found ${recommendations.length} MNOJ cars matching your criteria (Budget: ${budget}, Type: ${vehicleType}${preferredBrand ? `, Brand: ${preferredBrand}` : ""})`,
           },
         ],
         structuredContent: {

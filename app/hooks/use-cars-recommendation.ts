@@ -25,7 +25,7 @@ type ToolResult = {
 };
 
 /**
- * Hook to fetch Mahindra cars recommendations from MCP tool
+ * Hook to fetch MNOJ cars recommendations from MCP tool (generic POC)
  * 
  * @param budget - Optional budget range filter
  * @param vehicleType - Optional vehicle type filter
@@ -53,7 +53,7 @@ export function useCarsRecommendation(
       setError(null);
 
       // Call the MCP tool with parameters
-      const response = await callTool("mahindra_cars_recommendation", {
+      const response = await callTool("mnoj_cars_recommendation", {
         budget: budget || "above 0",
         vehicleType: vehicleType || "SUV",
         preferredBrand: preferredBrand,
