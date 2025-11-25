@@ -20,6 +20,7 @@ export default function Home() {
   const displayMode = useDisplayMode();
   const requestDisplayMode = useRequestDisplayMode();
   const isChatGptApp = useIsChatGptApp();
+  const openExternal = useOpenExternal();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -35,17 +36,7 @@ export default function Home() {
     const body = encodeURIComponent(`Name: ${name}%0D%0AEmail: ${email}%0D%0A%0D%0A${message}`);
     // open user's email client with prefilled subject and body
     const mailto = `mailto:pocaiwork@gmail.com?subject=${subject}&body=${body}`;
-    if (typeof window !== "undefined" && window?.openai?.openExternal) {
-      try {
-        window.openai.openExternal({ href: mailto });
-        return;
-      } catch (err) {
-        // fallthrough to web fallback
-        console.warn("openExternal failed, falling back to window.location", err);
-      }
-    }
-
-    window.location.href = mailto;
+    openExternal(mailto);
   }
 
   return (
