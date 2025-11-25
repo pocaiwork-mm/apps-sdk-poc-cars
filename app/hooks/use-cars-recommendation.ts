@@ -6,6 +6,7 @@ export type CarData = {
   year: number;
   price: string;
   description: string;
+  imageUrl?: string;
 };
 
 export type UseCarsRecommendationReturn = {
@@ -13,6 +14,14 @@ export type UseCarsRecommendationReturn = {
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+};
+
+type ToolResult = {
+  result?: {
+    structuredContent?: {
+      recommendations?: CarData[];
+    };
+  };
 };
 
 /**
@@ -50,8 +59,26 @@ export function useCarsRecommendation(
         preferredBrand: preferredBrand,
       });
 
-      if (response?.result?.structuredContent?.recommendations) {
-        setCars(response.result.structuredContent.recommendations);
+      if (!response) {
+        setCars([]);
+        return;
+      }
+
+      // Parse the response - it could be JSON string or object
+      let toolResult: ToolResult = {};
+      if (typeof response.result === "string") {
+        try {
+          toolResult = JSON.parse(response.result);
+        } catch {
+          toolResult = response as unknown as ToolResult;
+        }
+      } else {
+        toolResult = response as unknown as ToolResult;
+      }
+
+      const recommendations = toolResult?.result?.structuredContent?.recommendations;
+      if (Array.isArray(recommendations)) {
+        setCars(recommendations);
       } else {
         setCars([]);
       }

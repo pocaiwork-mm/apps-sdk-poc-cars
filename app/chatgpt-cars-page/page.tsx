@@ -41,27 +41,36 @@ export default function ChatGPTCarsPage() {
     );
   }
 
-  // Fallback data if no cars are fetched
-  const displayCars = cars.length > 0 ? cars : [
+
+  // Fallback demo cars with images
+  const fallbackCars = [
     {
       imageUrl: '/images/car1.jpg',
       model: 'Mahindra XUV700',
       year: 2024,
-      price: '$32,000'
+      price: '$32,000',
+      description: 'Premium SUV'
     },
     {
       imageUrl: '/images/car2.jpg',
       model: 'Mahindra Scorpio',
       year: 2023,
-      price: '$28,500'
+      price: '$28,500',
+      description: 'Rugged SUV'
     },
     {
       imageUrl: '/images/car3.jpg',
       model: 'Mahindra Bolero',
       year: 2023,
-      price: '$18,000'
+      price: '$18,000',
+      description: 'Affordable SUV'
     }
   ];
+
+  const displayCars = cars.length > 0 ? cars.map((car) => ({
+    ...car,
+    imageUrl: car.imageUrl || '/images/car-default.jpg'
+  })) : fallbackCars;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4">
@@ -70,7 +79,7 @@ export default function ChatGPTCarsPage() {
         <p className="text-gray-600 dark:text-gray-400 mb-12">Explore our latest collection of vehicles</p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {displayCars.map((car, index) => (
+          {displayCars?.map((car, index) => (
             <CarCard
               key={index}
               imageUrl={car.imageUrl}

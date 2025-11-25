@@ -1,43 +1,192 @@
 import { baseURL } from "@/baseUrl";
 import { createMcpHandler } from "mcp-handler";
-import { getAppsSdkCompatibleHtml } from "@/app/mcp/utility/helpers";
-import { carsWidget } from "@/app/mcp/widgets/index";
-import { carsRecommendationTool } from "@/app/mcp/tools/cars-recommendation";
-import { createCarsWidgetResource } from "@/app/mcp/resources/cars-widget";
+import { z } from "zod";
+import { carsData, Car } from "@/app/mcp/data/cars";
+
+const getAppsSdkCompatibleHtml = async (baseUrl: string, path: string) => {
+  const result = await fetch(`${baseUrl}${path}`);
+  return await result.text();
+};
+
+type ContentWidget = {
+  id: string;
+  title: string;
+  templateUri: string;
+  invoking: string;
+  invoked: string;
+  html: string;
+  description: string;
+  widgetDomain: string;
+};
+
+function widgetMeta(widget: ContentWidget) {
+  return {
+    "openai/outputTemplate": widget.templateUri,
+    "openai/toolInvocation/invoking": widget.invoking,
+    "openai/toolInvocation/invoked": widget.invoked,
+    "openai/widgetAccessible": false,
+    "openai/resultCanProduceWidget": true,
+  } as const;
+}
 
 const handler = createMcpHandler(async (server) => {
-  // Fetch cars page HTML
+  const html = await getAppsSdkCompatibleHtml(baseURL, "/");
   const carsHtml = await getAppsSdkCompatibleHtml(baseURL, "/chatgpt-cars-page");
 
-  // Set up cars widget with fetched HTML
-  carsWidget.html = carsHtml;
+  // Content Widget
+  const contentWidget: ContentWidget = {
+    id: "show_content",
+    title: "Show Content",
+    templateUri: "ui://widget/content-template.html",
+    invoking: "Loading content...",
+    invoked: "Content loaded",
+    html: html,
+    description: "Displays the homepage content",
+    widgetDomain: "https://nextjs.org/docs",
+  };
+  
+  server.registerResource(
+    "content-widget",
+    contentWidget.templateUri,
+    {
+      title: contentWidget.title,
+      description: contentWidget.description,
+      mimeType: "text/html+skybridge",
+      _meta: {
+        "openai/widgetDescription": contentWidget.description,
+        "openai/widgetPrefersBorder": true,
+      },
+    },
+    async (uri) => ({
+      contents: [
+        {
+          uri: uri.href,
+          mimeType: "text/html+skybridge",
+          text: `<html>${contentWidget.html}</html>`,
+          _meta: {
+            "openai/widgetDescription": contentWidget.description,
+            "openai/widgetPrefersBorder": true,
+            "openai/widgetDomain": contentWidget.widgetDomain,
+          },
+        },
+      ],
+    })
+  );
 
-  // Register Cars Widget Resource
-  const carsResourceConfig = createCarsWidgetResource(carsWidget, carsHtml);
+  server.registerTool(
+    contentWidget.id,
+    {
+      title: contentWidget.title,
+      description:
+        "Fetch and display the homepage content with the name of the user",
+      inputSchema: {
+        name: z.string().describe("The name of the user to display on the homepage"),
+      },
+      _meta: widgetMeta(contentWidget),
+    },
+    async ({ name }) => {
+      return {
+        content: [
+          {
+            type: "text",
+            text: name,
+          },
+        ],
+        structuredContent: {
+          name: name,
+          timestamp: new Date().toISOString(),
+        },
+        _meta: widgetMeta(contentWidget),
+      };
+    }
+  );
+
+  // Cars Recommendation Widget
+  const carsWidget: ContentWidget = {
+    id: "mahindra_cars_recommendation",
+    title: "Mahindra Cars",
+    templateUri: "ui://widget/cars-template.html",
+    invoking: "Finding perfect Mahindra for you...",
+    invoked: "Cars recommendations ready",
+    html: carsHtml,
+    description: "Get personalized Mahindra car recommendations",
+    widgetDomain: "https://mahindra.com",
+  };
+
   server.registerResource(
     "cars-widget",
     carsWidget.templateUri,
-    carsResourceConfig.options,
-    carsResourceConfig.handler
+    {
+      title: carsWidget.title,
+      description: carsWidget.description,
+      mimeType: "text/html+skybridge",
+      _meta: {
+        "openai/widgetDescription": carsWidget.description,
+        "openai/widgetPrefersBorder": true,
+      },
+    },
+    async (uri) => ({
+      contents: [
+        {
+          uri: uri.href,
+          mimeType: "text/html+skybridge",
+          text: `<html>${carsWidget.html}</html>`,
+          _meta: {
+            "openai/widgetDescription": carsWidget.description,
+            "openai/widgetPrefersBorder": true,
+            "openai/widgetDomain": carsWidget.widgetDomain,
+          },
+        },
+      ],
+    })
   );
 
-  // Register Cars Recommendation Tool
   server.registerTool(
     carsWidget.id,
     {
       title: carsWidget.title,
       description:
         "Get personalized Mahindra car recommendations based on budget, vehicle type, and preferences",
-      inputSchema: carsRecommendationTool.schema,
-      _meta: {
-        "openai/outputTemplate": carsWidget.templateUri,
-        "openai/toolInvocation/invoking": carsWidget.invoking,
-        "openai/toolInvocation/invoked": carsWidget.invoked,
-        "openai/widgetAccessible": false,
-        "openai/resultCanProduceWidget": true,
+      inputSchema: {
+        budget: z
+          .string()
+          .describe("Budget range (e.g., 'under 20000', '20000-30000', 'above 30000')"),
+        vehicleType: z
+          .enum(["SUV", "Sedan", "Hatchback", "MPV"])
+          .describe("Type of vehicle preference"),
+        preferredBrand: z
+          .string()
+          .optional()
+          .describe("Preferred Mahindra brand (e.g., XUV, Scorpio, Bolero)"),
       },
+      _meta: widgetMeta(carsWidget),
     },
-    carsRecommendationTool.handler(carsWidget)
+    async ({ budget, vehicleType, preferredBrand }) => {
+      // Filter cars based on criteria
+      const recommendations = carsData.filter((car) => {
+        const typeMatch = !vehicleType || car.type === vehicleType;
+        const brandMatch =
+          !preferredBrand ||
+          car.model.toLowerCase().includes(preferredBrand.toLowerCase());
+        return typeMatch && brandMatch;
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Found ${recommendations.length} Mahindra cars matching your criteria (Budget: ${budget}, Type: ${vehicleType}${preferredBrand ? `, Brand: ${preferredBrand}` : ""})`,
+          },
+        ],
+        structuredContent: {
+          recommendations,
+          count: recommendations.length,
+          filters: { budget, vehicleType, preferredBrand },
+          timestamp: new Date().toISOString(),
+        },
+        _meta: widgetMeta(carsWidget),
+      };
+    }
   );
 });
 
