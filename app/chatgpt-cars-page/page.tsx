@@ -3,12 +3,18 @@
 import React, { useRef } from "react";
 import CarCard from '../widgets-ui/CarCard';
 import { useCarsRecommendation } from '../hooks/use-cars-recommendation';
+import { useIsChatGptApp } from '../hooks/use-is-chatgpt-app';
+import { carsData } from '../mcp/data/cars';
 
 export default function ChatGPTCarsPage() {
-  // Fetch cars data using the hook
-  const { cars, loading, error } = useCarsRecommendation();
+  // Determine environment and fetch cars data using the hook when inside ChatGPT
+  const isChat = useIsChatGptApp();
+  const { cars: recommendedCars, loading, error } = useCarsRecommendation();
 
-  if (loading) {
+  // If not running inside ChatGPT, fall back to local static data
+  const cars = isChat ? recommendedCars : carsData;
+
+  if (isChat && loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4">
         <div className="max-w-7xl mx-auto">
@@ -25,7 +31,7 @@ export default function ChatGPTCarsPage() {
     );
   }
 
-  if (error) {
+  if (isChat && error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4">
         <div className="max-w-7xl mx-auto">
@@ -59,46 +65,18 @@ export default function ChatGPTCarsPage() {
         <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">MNOJ Cars</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-12">Explore our latest collection of vehicles</p>
         
-        {/* Carousel */}
-        <div className="relative">
-          <button
-            aria-label="Previous"
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/90 dark:bg-gray-800/90 shadow-md"
-            onClick={() => {
-              const el = carouselRef.current;
-              if (el) el.scrollBy({ left: -el.clientWidth, behavior: 'smooth' });
-            }}
-          >
-            ‹
-          </button>
-
-          <div
-            ref={carouselRef}
-            className="flex gap-6 overflow-x-auto scroll-smooth py-6 px-4 snap-x snap-mandatory hide-scrollbar"
-            style={{ WebkitOverflowScrolling: 'touch' }}
-          >
-            {displayCars?.map((car, index) => (
-              <div key={index} className="snap-center flex-shrink-0 min-w-[280px] sm:min-w-[340px] md:min-w-[420px]">
-                <CarCard
-                  imageUrl={car.imageUrl}
-                  model={car.model}
-                  year={car.year}
-                  price={car.price}
-                />
-              </div>
-            ))}
-          </div>
-
-          <button
-            aria-label="Next"
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/90 dark:bg-gray-800/90 shadow-md"
-            onClick={() => {
-              const el = carouselRef.current;
-              if (el) el.scrollBy({ left: el.clientWidth, behavior: 'smooth' });
-            }}
-          >
-            ›
-          </button>
+        {/* Grid of cards (simple layout). Use local data when not in ChatGPT. */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {displayCars?.map((car, index) => (
+            <div key={index}>
+              <CarCard
+                imageUrl={car.imageUrl}
+                model={car.model}
+                year={car.year}
+                price={car.price}
+              />
+            </div>
+          ))}
         </div>
       </div>
     </div>
