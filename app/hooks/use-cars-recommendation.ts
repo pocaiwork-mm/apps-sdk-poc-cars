@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useCallTool } from "./use-call-tool";
 import { useWidgetProps } from "./use-widget-props";
 import { useIsChatGptApp } from "./use-is-chatgpt-app";
-import { carsData } from '../mcp/data/cars';
+import { useOpenAIGlobal } from "./use-openai-global";
+import { carsData } from "../mcp/data/cars";
 
 export type CarData = {
   model: string;
@@ -20,92 +21,156 @@ export type UseCarsRecommendationReturn = {
 };
 
 type CarsToolResponse = {
-  result?: string;
+  // Shape when called directly via useCallTool
   structuredContent?: {
     count?: number;
     filters?: Record<string, unknown>;
     recommendations?: CarData[];
     timestamp?: string;
   };
+  // In case tool returns recommendations at the top level
+  recommendations?: CarData[];
   isError?: boolean;
+  error?: string;
 } | null;
 
+// Shape of the widget props coming from ChatGPT tool output
+type CarsWidgetProps = {
+  recommendations?: CarData[];
+  structuredContent?: {
+    recommendations?: CarData[];
+  };
+  result?: {
+    structuredContent?: {
+      recommendations?: CarData[];
+    };
+  };
+};
+
+// Shape of the OpenAI global tool input (arguments the model used)
+type CarsToolInput = {
+  budget?: string;
+  vehicleType?: "SUV" | "Sedan" | "Hatchback" | "MPV";
+  preferredBrand?: string;
+};
+
 /**
- * Hook to fetch MNOJ cars recommendations from MCP tool (generic POC)
- * 
- * @param budget - Optional budget range filter
- * @param vehicleType - Optional vehicle type filter
- * @param preferredBrand - Optional brand preference filter
- * @returns Object containing cars data, loading state, and error state
- * 
- * @example
- * ```tsx
- * const { cars, loading, error } = useCarsRecommendation("20000-30000", "SUV");
- * ```
+ * Hook to fetch MNOJ car recommendations.
+ *
+ * Behavior:
+ * - Inside ChatGPT:
+ *   - Primary source: widget props (tool output) via useWidgetProps.
+ *   - refetch(): actively calls the MCP tool again using toolInput.
+ * - Outside ChatGPT:
+ *   - Uses local static carsData.
  */
 export function useCarsRecommendation(): UseCarsRecommendationReturn {
-   // Determine environment and fetch cars data using the hook when inside ChatGPT
   const isChat = useIsChatGptApp();
-  const {budget, vehicleType, preferredBrand} = useWidgetProps({ budget: "above 0", vehicleType: "SUV", preferredBrand: "SUV" });
+
+  const toolOutput = useWidgetProps<CarsWidgetProps>();
+  const isFetchingTool = typeof toolOutput === "undefined";
+
+  const toolInput = useOpenAIGlobal("toolInput") as CarsToolInput | null;
+
   const [cars, setCars] = useState<CarData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
   const callTool = useCallTool();
+
+  const extractRecommendationsFromWidget = (output?: CarsWidgetProps): CarData[] => {
+    if (!output) return [];
+    return (
+      output.result?.structuredContent?.recommendations ??
+      output.structuredContent?.recommendations ??
+      output.recommendations ??
+      []
+    );
+  };
+
+  const extractRecommendationsFromResponse = (response: CarsToolResponse): CarData[] => {
+    if (!response) return [];
+    return (
+      response.structuredContent?.recommendations ??
+      response.recommendations ??
+      []
+    );
+  };
 
   const fetchCars = async () => {
     try {
       setLoading(true);
       setError(null);
-      console.warn("[useCarsRecommendation] 🚀 Starting fetch with params:", { budget, vehicleType, preferredBrand });
 
-      // Call the MCP tool with parameters
-      const response = await callTool("mnoj_cars_recommendation", {
-        budget: budget || "above 0",
-        vehicleType: vehicleType || "SUV",
-        preferredBrand: preferredBrand,
-      });
+      // Defaults if the model did not provide anything
+      const effectiveBudget = toolInput?.budget ?? "under 20000";
+      const effectiveVehicleType =
+        toolInput?.vehicleType ?? "SUV";
+      const effectivePreferredBrand = toolInput?.preferredBrand;
 
-      console.warn("[useCarsRecommendation] 📥 Raw response:", response);
+      const payload = {
+        budget: effectiveBudget,
+        vehicleType: effectiveVehicleType,
+        preferredBrand: effectivePreferredBrand,
+      };
 
-      if (!response) {
-        console.warn("[useCarsRecommendation] ⚠️ No response from tool");
-        setCars([]);
-        return;
-      }
+      console.warn("[useCarsRecommendation] 🚀 Refetch with payload:", payload);
 
-      // The response has structuredContent at the top level with recommendations inside
-      // response.structuredContent.recommendations = CarData[]
-      const toolResponse = response as CarsToolResponse;
-      let recommendations = toolResponse?.structuredContent?.recommendations;
-      console.warn("[useCarsRecommendation] 🔍 Extracted recommendations from structuredContent:", recommendations);
-      
-      if (Array.isArray(recommendations)) {
-        console.warn("[useCarsRecommendation] ✅ Setting cars with", recommendations.length, "items:", recommendations);
+      const response = (await callTool(
+        "mnoj_cars_recommendation",
+        payload
+      )) as CarsToolResponse;
+
+      console.warn("[useCarsRecommendation] 📥 Raw refetch response:", response);
+
+      const recommendations = extractRecommendationsFromResponse(response);
+
+      if (recommendations.length > 0) {
         setCars(recommendations);
       } else {
-        console.warn("[useCarsRecommendation] ❌ No valid recommendations found, setting empty array");
         setCars([]);
       }
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to fetch cars";
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to fetch cars";
       console.warn("[useCarsRecommendation] 💥 Error:", errorMsg, err);
       setError(errorMsg);
       setCars([]);
     } finally {
       setLoading(false);
-      console.warn("[useCarsRecommendation] ⏹️ Fetch complete");
+      console.warn("[useCarsRecommendation] ⏹️ Refetch complete");
     }
   };
 
   useEffect(() => {
-    if(isChat) {
-      fetchCars();
-    } else {
+    setError(null);
+
+    if (isChat) {
+      // In ChatGPT: wait for widget props (tool output)
+      if (isFetchingTool) {
+        setLoading(true);
+        return;
+      }
+
+      const recommendations = extractRecommendationsFromWidget(toolOutput);
+      console.warn(
+        "[useCarsRecommendation] 📊 Widget tool output:",
+        toolOutput,
+        "→ recommendations:",
+        recommendations
+      );
+
+      setCars(recommendations);
       setLoading(false);
+    } else {
+      // Outside ChatGPT: use static data
+      console.warn(
+        "[useCarsRecommendation] 🌐 Not in ChatGPT, using local static data"
+      );
       setCars(carsData);
-      setError(null);
+      setLoading(false);
     }
-  }, [budget, vehicleType, preferredBrand, isChat]);
+  }, [isChat, isFetchingTool, toolOutput]);
 
   return { cars, loading, error, refetch: fetchCars };
 }
