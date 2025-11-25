@@ -59,24 +59,32 @@ export function useCarsRecommendation(
         preferredBrand: preferredBrand,
       });
 
+      console.warn("Cars Tool Response:", response);
+
       if (!response) {
         setCars([]);
         return;
       }
 
       // Parse the response - it could be JSON string or object
-      let toolResult: ToolResult = {};
+      let parsed: any = {};
       if (typeof response.result === "string") {
         try {
-          toolResult = JSON.parse(response.result);
+          parsed = JSON.parse(response.result);
         } catch {
-          toolResult = response as unknown as ToolResult;
+          parsed = response;
         }
       } else {
-        toolResult = response as unknown as ToolResult;
+        parsed = response;
       }
 
-      const recommendations = toolResult?.result?.structuredContent?.recommendations;
+      // Handle both nested structure (result.structuredContent.recommendations)
+      // and flat structure (top-level recommendations from ChatGPT)
+      let recommendations = parsed?.result?.structuredContent?.recommendations;
+      if (!Array.isArray(recommendations)) {
+        recommendations = parsed?.recommendations;
+      }
+      
       if (Array.isArray(recommendations)) {
         setCars(recommendations);
       } else {
