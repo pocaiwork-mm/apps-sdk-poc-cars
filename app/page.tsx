@@ -8,6 +8,7 @@ import {
   useDisplayMode,
   useRequestDisplayMode,
   useIsChatGptApp,
+  useOpenExternal,
 } from "./hooks";
 
 export default function Home() {
@@ -33,7 +34,18 @@ export default function Home() {
     const subject = encodeURIComponent("MNOJ Inquiry from website");
     const body = encodeURIComponent(`Name: ${name}%0D%0AEmail: ${email}%0D%0A%0D%0A${message}`);
     // open user's email client with prefilled subject and body
-    window.location.href = `mailto:contact@pocaiwork@gmail.com?subject=${subject}&body=${body}`;
+    const mailto = `mailto:pocaiwork@gmail.com?subject=${subject}&body=${body}`;
+    if (typeof window !== "undefined" && window?.openai?.openExternal) {
+      try {
+        window.openai.openExternal({ href: mailto });
+        return;
+      } catch (err) {
+        // fallthrough to web fallback
+        console.warn("openExternal failed, falling back to window.location", err);
+      }
+    }
+
+    window.location.href = mailto;
   }
 
   return (
