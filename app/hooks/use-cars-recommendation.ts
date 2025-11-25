@@ -16,13 +16,16 @@ export type UseCarsRecommendationReturn = {
   refetch: () => Promise<void>;
 };
 
-type ToolResult = {
-  result?: {
-    structuredContent?: {
-      recommendations?: CarData[];
-    };
+type CarsToolResponse = {
+  result?: string;
+  structuredContent?: {
+    count?: number;
+    filters?: Record<string, unknown>;
+    recommendations?: CarData[];
+    timestamp?: string;
   };
-};
+  isError?: boolean;
+} | null;
 
 /**
  * Hook to fetch MNOJ cars recommendations from MCP tool (generic POC)
@@ -70,20 +73,9 @@ export function useCarsRecommendation(
 
       // The response has structuredContent at the top level with recommendations inside
       // response.structuredContent.recommendations = CarData[]
-      let recommendations = response?.structuredContent?.recommendations;
+      const toolResponse = response as CarsToolResponse;
+      let recommendations = toolResponse?.structuredContent?.recommendations;
       console.warn("[useCarsRecommendation] 🔍 Extracted recommendations from structuredContent:", recommendations);
-      
-      // Fallback: check if response.result is a stringified JSON with recommendations
-      if (!Array.isArray(recommendations) && typeof response.result === "string") {
-        console.warn("[useCarsRecommendation] 📋 Trying JSON parse fallback on result string");
-        try {
-          const parsed = JSON.parse(response.result);
-          recommendations = parsed?.recommendations;
-          console.warn("[useCarsRecommendation] ✅ Parsed recommendations from result:", recommendations);
-        } catch (e) {
-          console.warn("[useCarsRecommendation] ❌ JSON parse failed", e);
-        }
-      }
       
       if (Array.isArray(recommendations)) {
         console.warn("[useCarsRecommendation] ✅ Setting cars with", recommendations.length, "items:", recommendations);
