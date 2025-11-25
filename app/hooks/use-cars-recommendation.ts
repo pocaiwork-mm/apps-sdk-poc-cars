@@ -51,6 +51,7 @@ export function useCarsRecommendation(
     try {
       setLoading(true);
       setError(null);
+      console.warn("[useCarsRecommendation] 🚀 Starting fetch with params:", { budget, vehicleType, preferredBrand });
 
       // Call the MCP tool with parameters
       const response = await callTool("mnoj_cars_recommendation", {
@@ -59,42 +60,46 @@ export function useCarsRecommendation(
         preferredBrand: preferredBrand,
       });
 
-      console.warn("Cars Tool Response:", response);
+      console.warn("[useCarsRecommendation] 📥 Raw response:", response);
 
       if (!response) {
+        console.warn("[useCarsRecommendation] ⚠️ No response from tool");
         setCars([]);
         return;
       }
 
-      // Parse the response - it could be JSON string or object
-      let parsed: any = {};
-      if (typeof response.result === "string") {
+      // The response has structuredContent at the top level with recommendations inside
+      // response.structuredContent.recommendations = CarData[]
+      let recommendations = response?.structuredContent?.recommendations;
+      console.warn("[useCarsRecommendation] 🔍 Extracted recommendations from structuredContent:", recommendations);
+      
+      // Fallback: check if response.result is a stringified JSON with recommendations
+      if (!Array.isArray(recommendations) && typeof response.result === "string") {
+        console.warn("[useCarsRecommendation] 📋 Trying JSON parse fallback on result string");
         try {
-          parsed = JSON.parse(response.result);
-        } catch {
-          parsed = response;
+          const parsed = JSON.parse(response.result);
+          recommendations = parsed?.recommendations;
+          console.warn("[useCarsRecommendation] ✅ Parsed recommendations from result:", recommendations);
+        } catch (e) {
+          console.warn("[useCarsRecommendation] ❌ JSON parse failed", e);
         }
-      } else {
-        parsed = response;
-      }
-
-      // Handle both nested structure (result.structuredContent.recommendations)
-      // and flat structure (top-level recommendations from ChatGPT)
-      let recommendations = parsed?.result?.structuredContent?.recommendations;
-      if (!Array.isArray(recommendations)) {
-        recommendations = parsed?.recommendations;
       }
       
       if (Array.isArray(recommendations)) {
+        console.warn("[useCarsRecommendation] ✅ Setting cars with", recommendations.length, "items:", recommendations);
         setCars(recommendations);
       } else {
+        console.warn("[useCarsRecommendation] ❌ No valid recommendations found, setting empty array");
         setCars([]);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch cars");
+      const errorMsg = err instanceof Error ? err.message : "Failed to fetch cars";
+      console.warn("[useCarsRecommendation] 💥 Error:", errorMsg, err);
+      setError(errorMsg);
       setCars([]);
     } finally {
       setLoading(false);
+      console.warn("[useCarsRecommendation] ⏹️ Fetch complete");
     }
   };
 
