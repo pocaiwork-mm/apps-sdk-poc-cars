@@ -1,6 +1,6 @@
-# ChatGPT Apps SDK Next.js Starter
+# MNOJ Motors — POC ChatGPT Apps Demo
 
-A minimal Next.js application demonstrating how to build an [OpenAI Apps SDK](https://developers.openai.com/apps-sdk) compatible MCP server with widget rendering in ChatGPT.
+This repository contains a proof-of-concept Next.js application that demonstrates a minimal MCP (Model Context Protocol) server and a small vehicle catalog for the fictitious "MNOJ Motors" brand. It shows how a web app can expose tools and widget resources that ChatGPT (Apps SDK) can call and render.
 
 ## Overview
 

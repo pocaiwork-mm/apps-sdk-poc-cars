@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   useWidgetProps,
@@ -20,7 +20,21 @@ export default function Home() {
   const requestDisplayMode = useRequestDisplayMode();
   const isChatGptApp = useIsChatGptApp();
 
-  const name = toolOutput?.result?.structuredContent?.name || toolOutput?.name;
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+
+  const nameFromTool = toolOutput?.result?.structuredContent?.name || toolOutput?.name;
+  const isFetchingTool = typeof toolOutput === "undefined";
+  const hasToolName = Boolean(nameFromTool);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const subject = encodeURIComponent("MNOJ Inquiry from website");
+    const body = encodeURIComponent(`Name: ${name}%0D%0AEmail: ${email}%0D%0A%0D%0A${message}`);
+    // open user's email client with prefilled subject and body
+    window.location.href = `mailto:contact@pocaiwork@gmail.com?subject=${subject}&body=${body}`;
+  }
 
   return (
     <div
@@ -52,6 +66,7 @@ export default function Home() {
           </svg>
         </button>
       )}
+
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         {!isChatGptApp && (
           <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 w-full">
@@ -88,42 +103,124 @@ export default function Home() {
             </div>
           </div>
         )}
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Welcome to the ChatGPT Apps SDK Next.js Starter
-          </li>
-          <li className="mb-2 tracking-[-.01em]">
-            Name returned from tool call: {name ?? "..."}
-          </li>
-          <li className="mb-2 tracking-[-.01em]">MCP server path: /mcp</li>
-        </ol>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <Link
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            prefetch={false}
-            href="/custom-page"
-          >
-            Visit another page
-          </Link>
-          <a
-            href="https://vercel.com/templates/ai/chatgpt-app-with-next-js"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-          >
-            Deploy on Vercel
-          </a>
-        </div>
-      </main>
-    </div>
+        <div className="max-w-4xl mx-auto">
+        <header className="mb-8 flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold">
+              {hasToolName ? `Hi ${nameFromTool}, welcome MNOJ Motors` : "Welcome to MNOJ Motors"}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">
+            Building reliable, affordable vehicles — a POC brand for demos and
+            testing.
+          </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {isFetchingTool ? (
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                <span className="h-3 w-3 rounded-full bg-blue-500 animate-pulse block" />
+                <span>Fetching session…</span>
+              </div>
+            ) : hasToolName ? (
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-800 text-sm">
+                <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 10-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z" clipRule="evenodd" />
+                </svg>
+                <span>Connected</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800">No session</span>
+              </div>
+            )}
+          </div>
+        </header>
+
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+          <div>
+            <h2 className="text-2xl font-semibold mb-3">About MNOJ</h2>
+            <p className="text-gray-700 dark:text-gray-300">
+              MNOJ is a proof-of-concept vehicle brand used for demonstrating
+              the apps SDK and MCP tooling. This sample company showcases a
+              small catalog of cars and tools to recommend vehicles based on
+              user preferences.
+            </p>
+
+            <div className="mt-6">
+              <h3 className="font-medium">Headquarters</h3>
+              <address className="not-italic text-gray-700 dark:text-gray-300">
+                123 Demo Lane
+                <br />
+                Sample City, SC 01234
+              </address>
+
+              <p className="mt-3">
+                <strong>Phone:</strong> <a href="tel:+1234567890" className="underline">+1 (234) 567-890</a>
+                <br />
+                <strong>Email:</strong> <a href="mailto:contact@mnoj.example" className="underline">contact@mnoj.example</a>
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-semibold mb-3">Contact Us</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Name</label>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded border px-3 py-2 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700"
+                  placeholder="Your name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded border px-3 py-2 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Message</label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="w-full rounded border px-3 py-2 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700"
+                  rows={5}
+                  placeholder="How can we help you?"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="submit"
+                  className="rounded bg-blue-600 text-white px-4 py-2 hover:bg-blue-700"
+                >
+                  Send message
+                </button>
+                <Link href="/chatgpt-cars-page" className="underline">
+                  View car recommendations
+                </Link>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <footer className="text-sm text-gray-600 dark:text-gray-400">
+          © {new Date().getFullYear()} MNOJ Motors. All rights reserved.
+        </footer>
+      </div>
+    </main>
+  </div>
   );
 }
