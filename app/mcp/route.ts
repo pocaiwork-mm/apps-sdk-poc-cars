@@ -104,17 +104,17 @@ const handler = createMcpHandler(async (server) => {
   // Cars Recommendation Widget (generic POC: MNOJ)
   const carsWidget: ContentWidget = {
     id: "mnoj_cars_recommendation",
-    title: "MNOJ Cars",
-    templateUri: "ui://widget/cars-template.html",
+    title: "MNOJ Cars Widget",
+    templateUri: "ui://widget/cars-widget.html",
     invoking: "Finding the perfect MNOJ for you...",
     invoked: "Cars recommendations ready",
     html: carsHtml,
-    description: "Get personalized MNOJ car recommendations",
+    description: "Displays a MNOJ Car Widget with styling",
     widgetDomain: "https://example.com",
   };
 
   server.registerResource(
-    "cars-widget",
+    "cars-widget-html",
     carsWidget.templateUri,
     {
       title: carsWidget.title,
@@ -146,7 +146,7 @@ const handler = createMcpHandler(async (server) => {
     {
       title: carsWidget.title,
       description:
-        "Get personalized MNOJ car recommendations based on budget, vehicle type, and preferences",
+        "Get MNOJ car recommendations based on budget, vehicle type, and preferences from the MNOJ catalog",
       inputSchema: {
         budget: z
           .string()
@@ -189,6 +189,8 @@ const handler = createMcpHandler(async (server) => {
     }
   );
 });
+
+
 
 export const GET = handler;
 export const POST = handler;

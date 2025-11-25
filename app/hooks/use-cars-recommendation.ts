@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { useCallTool } from "./use-call-tool";
+import { useWidgetProps } from "./use-widget-props";
+import { useIsChatGptApp } from "./use-is-chatgpt-app";
+import { carsData } from '../mcp/data/cars';
 
 export type CarData = {
   model: string;
@@ -40,11 +43,10 @@ type CarsToolResponse = {
  * const { cars, loading, error } = useCarsRecommendation("20000-30000", "SUV");
  * ```
  */
-export function useCarsRecommendation(
-  budget?: string,
-  vehicleType?: "SUV" | "Sedan" | "Hatchback" | "MPV",
-  preferredBrand?: string
-): UseCarsRecommendationReturn {
+export function useCarsRecommendation(): UseCarsRecommendationReturn {
+   // Determine environment and fetch cars data using the hook when inside ChatGPT
+  const isChat = useIsChatGptApp();
+  const {budget, vehicleType, preferredBrand} = useWidgetProps({ budget: "above 0", vehicleType: "SUV", preferredBrand: "SUV" });
   const [cars, setCars] = useState<CarData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,8 +98,14 @@ export function useCarsRecommendation(
   };
 
   useEffect(() => {
-    fetchCars();
-  }, [budget, vehicleType, preferredBrand]);
+    if(isChat) {
+      fetchCars();
+    } else {
+      setLoading(false);
+      setCars(carsData);
+      setError(null);
+    }
+  }, [budget, vehicleType, preferredBrand, isChat]);
 
   return { cars, loading, error, refetch: fetchCars };
 }
