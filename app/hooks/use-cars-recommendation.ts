@@ -144,14 +144,14 @@ export function useCarsRecommendation(): UseCarsRecommendationReturn {
 
   useEffect(() => {
     setError(null);
-
+    setLoading(true);
+    setCars([]);
+    
     if (isChat) {
       // In ChatGPT: wait for widget props (tool output)
       if (isFetchingTool) {
-        setLoading(true);
         return;
       }
-
       const recommendations = extractRecommendationsFromWidget(toolOutput);
       console.warn(
         "[useCarsRecommendation] 📊 Widget tool output:",
