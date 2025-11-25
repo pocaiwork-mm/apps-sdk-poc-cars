@@ -68,7 +68,7 @@ export function useCarsRecommendation(): UseCarsRecommendationReturn {
   const isChat = useIsChatGptApp();
 
   const toolOutput = useWidgetProps<CarsWidgetProps>();
-  const isFetchingTool = typeof toolOutput === "undefined";
+  const isFetchingTool = toolOutput === undefined || toolOutput === null;
 
   const toolInput = useOpenAIGlobal("toolInput") as CarsToolInput | null;
 
@@ -143,34 +143,26 @@ export function useCarsRecommendation(): UseCarsRecommendationReturn {
   };
 
   useEffect(() => {
-    setError(null);
-    setLoading(true);
-    setCars([]);
-    
-    if (isChat) {
-      // In ChatGPT: wait for widget props (tool output)
-      if (isFetchingTool) {
-        return;
-      }
-      const recommendations = extractRecommendationsFromWidget(toolOutput);
-      console.warn(
-        "[useCarsRecommendation] 📊 Widget tool output:",
-        toolOutput,
-        "→ recommendations:",
-        recommendations
-      );
+  // don't run until environment is known
+  if (isChat === undefined) return;
 
-      setCars(recommendations);
-      setLoading(false);
-    } else {
-      // Outside ChatGPT: use static data
-      console.warn(
-        "[useCarsRecommendation] 🌐 Not in ChatGPT, using local static data"
-      );
-      setCars(carsData);
-      setLoading(false);
+  setError(null);
+
+  if (isChat) {
+    if (isFetchingTool) {
+      setLoading(true);
+      return;
     }
-  }, [isChat, isFetchingTool, toolOutput]);
+
+    const recommendations = extractRecommendationsFromWidget(toolOutput) ?? [];
+    setCars(recommendations);
+    setLoading(false);
+  } else {
+    setCars(carsData);
+    setLoading(false);
+  }
+}, [isChat, isFetchingTool, toolOutput]);
+
 
   return { cars, loading, error, refetch: fetchCars };
 }
