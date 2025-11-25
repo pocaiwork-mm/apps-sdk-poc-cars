@@ -14,6 +14,9 @@ export { useOpenAIGlobal } from "./use-openai-global";
 export { useMaxHeight } from "./use-max-height";
 export { useIsChatGptApp } from "./use-is-chatgpt-app";
 
+// Domain-specific hooks
+export { useCarsRecommendation } from "./use-cars-recommendation";
+export type { CarData, UseCarsRecommendationReturn } from "./use-cars-recommendation";
+
 // Types
 export type * from "./types";
-
