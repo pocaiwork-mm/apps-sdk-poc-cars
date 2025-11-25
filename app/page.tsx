@@ -158,7 +158,7 @@ export default function Home() {
               <p className="mt-3">
                 <strong>Phone:</strong> <a href="tel:+1234567890" className="underline">+1 (234) 567-890</a>
                 <br />
-                <strong>Email:</strong> <a href="mailto:contact@mnoj.example" className="underline">contact@mnoj.example</a>
+                <strong>Email:</strong> <a href="mailto:pocaiwork@gmail.com" className="underline">pocaiwork@gmail.com</a>
               </p>
             </div>
           </div>
@@ -208,9 +208,6 @@ export default function Home() {
                 >
                   Send message
                 </button>
-                <Link href="/chatgpt-cars-page" className="underline">
-                  View car recommendations
-                </Link>
               </div>
             </form>
           </div>
