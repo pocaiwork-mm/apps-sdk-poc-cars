@@ -32,4 +32,28 @@ export const carsData: Car[] = [
     imageUrl: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1000&q=80",
     description: "Affordable family SUV",
   },
+  {
+    model: "MNOJ Verve",
+    year: 2024,
+    price: "$22,500",
+    type: "Sedan",
+    imageUrl: "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1000&q=80",
+    description: "Efficient and stylish sedan for everyday driving",
+  },
+  {
+    model: "MNOJ Swiftie",
+    year: 2024,
+    price: "$15,200",
+    type: "Hatchback",
+    imageUrl: "https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=1000&q=80",
+    description: "Compact hatchback with nimble handling",
+  },
+  {
+    model: "MNOJ Voyager",
+    year: 2022,
+    price: "$26,800",
+    type: "MPV",
+    imageUrl: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1000&q=80",
+    description: "Spacious MPV perfect for families and cargo",
+  },
 ];
