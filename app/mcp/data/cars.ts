@@ -41,6 +41,14 @@ export const carsData: Car[] = [
     description: "Efficient and stylish sedan for everyday driving",
   },
   {
+    model: "MNOJ Aura",
+    year: 2022,
+    price: "$20,000",
+    type: "Sedan",
+    imageUrl: "https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?auto=format&fit=crop&w=1000&q=80",
+    description: "Comfortable sedan with modern features",
+  },
+  {
     model: "MNOJ Swiftie",
     year: 2024,
     price: "$15,200",

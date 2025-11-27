@@ -106,7 +106,7 @@ const handler = createMcpHandler(async (server) => {
     id: "mnoj_cars_recommendation",
     title: "MNOJ Cars Widget",
     templateUri: "ui://widget/cars-widget.html",
-    invoking: "Finding the perfect MNOJ for you...",
+    invoking: "Finding the perfect MNOJ Car for you...",
     invoked: "Cars recommendations ready",
     html: carsHtml,
     description: "Displays a MNOJ Car Widget with styling",
@@ -146,7 +146,7 @@ const handler = createMcpHandler(async (server) => {
     {
       title: carsWidget.title,
       description:
-        "Get MNOJ car recommendations based on budget, vehicle type, and preferences from the MNOJ catalog",
+        "Get MNOJ car recommendations based on budget, vehicle type, and preferences from the MNOJ Car catalog. Display the results in Car Widget UI.",
       inputSchema: {
         budget: z
           .string()
