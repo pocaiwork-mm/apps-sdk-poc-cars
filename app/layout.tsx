@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MNOJ Card",
-  description: "MNOJ card application integrated with OpenAI ChatGPT, MCP, and Apps SDK. this is a sample application demonstrating the capabilities of the MCP and Apps SDK within the ChatGPT environment.",
+  title: "MNOJ Car",
+  description: "MNOJ car application integrated with OpenAI ChatGPT, MCP, and Apps SDK. this is a sample application demonstrating the capabilities of the MCP and Apps SDK within the ChatGPT environment.",
 };
 
 export default function RootLayout({
